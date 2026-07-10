@@ -1,4 +1,4 @@
-#  Compute Engine Monitoring with Ops Agent and Apache
+# <img src="https://github.com/barbaria888/ComputeEngine-Observability-with-OpsAgent/blob/main/images/Cloud%20Monitoring.png" height="70"> Compute Engine Monitoring with Ops Agent and Apache
 
 ## Executive Summary
 This repository contains reference configurations and instructions for deploying the unified Google Cloud Ops Agent<!-- TODO: add official doc link --> on a Compute Engine<!-- TODO: add official doc link --> VM hosting Apache Web Server<!-- TODO: add official doc link -->. By implementing this architecture, enterprise platform teams can automate the ingestion of application-level logs and server metrics into Cloud Logging<!-- TODO: add official doc link --> and Cloud Monitoring<!-- TODO: add official doc link --> for central visualization and alerting.
@@ -6,29 +6,36 @@ This repository contains reference configurations and instructions for deploying
 ## Architecture Overview
 
 ```mermaid
-graph TD
-    subgraph VPC ["Google Cloud VPC"]
-      subgraph Subnet ["Subnet"]
-        VM ["Compute Engine VM: quickstart-vm"]
-        subgraph OpsAgent ["Ops Agent Telemetry Pipeline"]
-          OB ["OpenTelemetry Collector (Metrics)"]
-          FB ["Fluent Bit (Logs)"]
-        end
-        Apache ["Apache Web Server"]
-      end
-      FW ["Firewall Rules (Allow HTTP/HTTPS)"]
-    end
-    Internet ["Internet Clients / curl Traffic Generator"]
-    Monitoring ["Cloud Monitoring"]
-    Logging ["Cloud Logging"]
+graph LR
+    Client["🌐 Client Traffic"]
 
-    Internet -->|HTTP/HTTPS Port 80/443| FW
-    FW --> VM
-    VM --> Apache
-    Apache -->|Access/Error Logs| FB
-    Apache -->|Server Status Metrics| OB
-    FB -->|Ingest Logs| Logging
-    OB -->|Ingest Metrics| Monitoring
+    subgraph GCP["Google Cloud Project"]
+        subgraph VPC["Google Cloud VPC"]
+            FW["🔥 Firewall"]
+
+            subgraph VM["🖥️ Compute Engine VM"]
+                Apache["🌐 Apache HTTP Server"]
+
+                subgraph Agent["📡 Google Cloud Ops Agent"]
+                    Logs["📜 Fluent Bit"]
+                    Metrics["📊 OpenTelemetry Collector"]
+                end
+            end
+        end
+
+        Logging["📝 Cloud Logging"]
+        Monitoring["📈 Cloud Monitoring"]
+    end
+
+    Client --> FW
+    FW --> Apache
+
+    Apache -->|Access/Error Logs| Logs
+    Apache -->|Performance Metrics| Metrics
+
+    Logs --> Logging
+    Metrics --> Monitoring
+
 ```
 
 The architecture is designed to capture full-stack telemetry from a virtualized application server. The Apache Web Server<!-- TODO: add official doc link --> runs on a Compute Engine<!-- TODO: add official doc link --> instance within a secure Google Cloud [VPC](https://cloud.google.com/vpc/docs). The Ops Agent<!-- TODO: add official doc link --> runs side-by-side with Apache<!-- TODO: add official doc link -->, tailing access and error logs via its Fluent Bit engine, and scraping server status metrics via its OpenTelemetry Collector engine. These data streams are securely routed to Cloud Logging<!-- TODO: add official doc link --> and Cloud Monitoring<!-- TODO: add official doc link --> over private Google API endpoints.
